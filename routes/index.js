@@ -7,6 +7,10 @@ router.get('/', (req, res, next)=>{
   res.render('index', { title: 'Express' });
 });
 
+router.get("/login", (req,res)=>{
+  res.render("login")
+})
+
 
 
 module.exports = router;

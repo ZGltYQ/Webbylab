@@ -71,9 +71,7 @@ app.use(ModelPassport.session());
 
 const storageConfig = multer.diskStorage({
   destination: (req, file, cb) =>{
-    if(req.session.passport.user.token){
-      cb(null, "uploads");
-    }   
+      cb(null, "uploads"); 
   },
   filename: (req, file, cb) =>{
       cb(null, file.originalname);

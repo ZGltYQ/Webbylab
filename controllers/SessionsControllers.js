@@ -2,7 +2,7 @@ const passport = require("passport");
 
 
 exports.create_session = (req, res, next)=>{
-        console.log(req.session)
+        console.log(req.body)
         passport.authenticate('local', function(err, user, info) {
           if (err) { return next(err); }
           if (!user) { 

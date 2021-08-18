@@ -6,10 +6,11 @@ const Op = Sequelize.Op;
 const fs = require("fs")
 
 exports.load_file = (req, res, next)=>{
-    if(req.session.passport.user.token){
-    fs.readFile("uploads/"+req.file.originalname, "utf8", 
+    if(req.session.passport?.user?.token){
+    fs.readFile(`uploads/${req.file.originalname}`, "utf8", 
             function(error,data){
-                if(error) throw error; // если возникла ошибка
+              try{
+                if(error) throw error;
                 let parse = data.split("\n").filter(row=>row.length>0);
                 let result = []
                 for (index=0; index < parse.length/4; index+=4){
@@ -27,7 +28,6 @@ exports.load_file = (req, res, next)=>{
 
                 result.forEach(item=>{
                     Movies.create(item).then(movie=>{
-                        console.log(movie)
                         let actor_list = [];
                         item.actors.map(actor=>{
                             actor_list.push({name:actor})
@@ -37,11 +37,16 @@ exports.load_file = (req, res, next)=>{
                                  movie.addActors(actor, {through:{movie_id:movie.dataValues.id, actor_id: actor.dataValues.id}})
                              });
                          });
+                    }).catch(err=>{
+                      console.log(err)
                     })
                 })
                   
                 res.json(result)
                    
+              } catch(err){
+                res.json(err)
+              }
                 // res.render('index', {list:parse})
         });
     } else {
@@ -58,7 +63,7 @@ exports.load_file = (req, res, next)=>{
     }
 
 exports.add_movie = (req,res)=>{
-    if(req.session.passport.user.token){
+    if(req.session.passport?.user?.token){
    Movies.create(req.body).then(movie=>{
         let actor_list = [];
         req.body.actors.map(actor=>{
@@ -109,7 +114,7 @@ exports.add_movie = (req,res)=>{
 }
 
 exports.del_movie = (req, res)=>{
-    if(req.session.passport.user.token){
+    if(req.session.passport?.user?.token){
     Movies.findOne({where: {id: req.params.id}})
     .then(movie=>{
         if(!movie) res.json({
@@ -148,7 +153,7 @@ exports.del_movie = (req, res)=>{
 }
 
 exports.update_movie = (req,res)=>{
-    if(req.session.passport.user.token){
+    if(req.session.passport?.user?.token){
         
         Movies.update(req.body,{where:{
             id:req.params.id
@@ -209,7 +214,7 @@ exports.update_movie = (req,res)=>{
 };
 
 exports.show_movie = (req, res)=>{
-    if(req.session.passport.user.token){
+    if(req.session.passport?.user?.token){
     Movies.findOne({where:{
         id:req.params.id
     }}).then(movie=>{
@@ -256,7 +261,7 @@ exports.show_movie = (req, res)=>{
 }
 
 exports.list_movies = (req, res)=>{
-    if(req.session.passport.user.token){
+    if(req.session.passport?.user?.token){
 
         let params = {
             where: {
