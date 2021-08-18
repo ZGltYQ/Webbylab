@@ -1,0 +1,11 @@
+<form class="row g-3" action="/api/v1/movies/import" method="POST" enctype="multipart/form-data">
+<div class="input-group mt-5">   
+        <input type="file" class="form-control" id="inputGroupFile04" name="movies" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+        <button class="btn btn-outline-secondary" type="submit" id="inputGroupFileAddon04">Button</button>
+</div>
+</form>
+<ul class="list-group">
+{{#each list}}
+<li class="list-group-item">{{this}}</li>
+{{/each}}
+</ul>
