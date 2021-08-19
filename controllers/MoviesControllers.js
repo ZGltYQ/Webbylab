@@ -6,7 +6,6 @@ const Op = Sequelize.Op;
 const fs = require("fs")
 
 exports.load_file = (req, res, next)=>{
-    if(req.session.passport?.user?.token){
     fs.readFile(`uploads/${req.file.originalname}`, "utf8", 
             function(error,data){
               try{
@@ -26,95 +25,73 @@ exports.load_file = (req, res, next)=>{
                     )
                 }
 
-                result.forEach(item=>{
-                    Movies.create(item).then(movie=>{
-                        let actor_list = [];
-                        item.actors.map(actor=>{
-                            actor_list.push({name:actor})
-                        })
-                         Actors.bulkCreate(actor_list).then(actors=>{
-                             actors.forEach(actor => {
-                                 movie.addActors(actor, {through:{movie_id:movie.dataValues.id, actor_id: actor.dataValues.id}})
-                             });
-                         });
-                    }).catch(err=>{
-                      console.log(err)
-                    })
+                let valid_value = result.filter((movie, index)=>{
+                  if(!movie.title || movie.title.length <= 0 && movie.year < 1850 || movie.year > 2021
+                    && !movie.actors.length && movie.actors.find((actor, index)=>movie.actors.slice(index + 1).includes(actor))
+                    && movie.actors.find(actor=>!/^[a-zA-Z\-,\s]+$/.test(actor)) 
+                    && movie.format !== "VHS" && movie.format !== "DVD" && movie.format !== "Blu-Ray") return false;
+                  return true
                 })
-                  
-                res.json(result)
+
+                
+                Movies.bulkCreate(valid_value).then(data=>{
+                  data.forEach(movie=>{
+                    Actors.bulkCreate(movie.dataValues.actors).then(actors=>{
+                      actors.forEach(actor => {
+                        movie.addActors(actor, {through:{movie_id:movie.dataValues.id, actor_id: actor.dataValues.id}})
+                      });
+                      
+                    });
+                  })
+                  res.json(data)
+                })
                    
               } catch(err){
                 res.json(err)
               }
-                // res.render('index', {list:parse})
-        });
-    } else {
-        res.json({
-            "status": 0,
-            "error": {
-              "fields": {
-                "token": "REQUIRED"
-              },
-              "code": "FORMAT_ERROR"
-            }
-          })
-    }  
+        });  
     }
 
 exports.add_movie = (req,res)=>{
-    if(req.session.passport?.user?.token){
-   Movies.create(req.body).then(movie=>{
-        let actor_list = [];
-        req.body.actors.map(actor=>{
-            actor_list.push({name:actor})
-        })
-        Actors.bulkCreate(actor_list).then(actors=>{
-            actors.forEach(actor => {
-                movie.addActors(actor, {through:{movie_id:movie.dataValues.id, actor_id: actor.dataValues.id}})
-            });
-
-            res.json({
-                "data": {
-                  "id": movie.dataValues.id,
-                  "title": movie.dataValues.title,
-                  "year": movie.dataValues.year,
-                  "format": movie.dataValues.format,
-                  "actors": [
-                    actors
-                  ],
-                  "createdAt": movie.dataValues.createdAt,
-                  "updatedAt": movie.dataValues.updatedAt
-                },
-                "status": 1
-              })
-        });
-   }).catch(()=>{
-       res.json({
-        "status": 0,
-        "error": {
-          "fields": {
-            "title": "NOT_UNIQUE"
-          },
-          "code": "MOVIE_EXISTS"
-        }
-      })
-   });
-} else {
-    res.json({
-        "status": 0,
-        "error": {
-          "fields": {
-            "token": "REQUIRED"
-          },
-          "code": "FORMAT_ERROR"
-        }
-      })
-}
+    Movies.create(req.body).then(movie=>{
+         let actor_list = [];
+         req.body.actors.map(actor=>{
+             actor_list.push({name:actor})
+         })
+         Actors.bulkCreate(actor_list).then(actors=>{
+             actors.forEach(actor => {
+                 movie.addActors(actor, {through:{movie_id:movie.dataValues.id, actor_id: actor.dataValues.id}})
+             });
+ 
+             res.json({
+                 "data": {
+                   "id": movie.dataValues.id,
+                   "title": movie.dataValues.title,
+                   "year": movie.dataValues.year,
+                   "format": movie.dataValues.format,
+                   "actors": [
+                     actors
+                   ],
+                   "createdAt": movie.dataValues.createdAt,
+                   "updatedAt": movie.dataValues.updatedAt
+                 },
+                 "status": 1
+               })
+         });
+    }).catch(()=>{
+        res.json({
+         "status": 0,
+         "error": {
+           "fields": {
+             "title": "NOT_UNIQUE"
+           },
+           "code": "MOVIE_EXISTS"
+         }
+       })
+    });
 }
 
 exports.del_movie = (req, res)=>{
-    if(req.session.passport?.user?.token){
     Movies.findOne({where: {id: req.params.id}})
     .then(movie=>{
         if(!movie) res.json({
@@ -139,22 +116,9 @@ exports.del_movie = (req, res)=>{
             });  
     });
 });
-} else {
-    res.json({
-        "status": 0,
-        "error": {
-          "fields": {
-            "token": "REQUIRED"
-          },
-          "code": "FORMAT_ERROR"
-        }
-      })
-}
 }
 
 exports.update_movie = (req,res)=>{
-    if(req.session.passport?.user?.token){
-        
         Movies.update(req.body,{where:{
             id:req.params.id
         }}).then(()=>{
@@ -199,22 +163,9 @@ exports.update_movie = (req,res)=>{
             })
             
         })
-
-    } else {
-        res.json({
-            "status": 0,
-            "error": {
-              "fields": {
-                "token": "REQUIRED"
-              },
-              "code": "FORMAT_ERROR"
-            }
-          })
-    }
 };
 
 exports.show_movie = (req, res)=>{
-    if(req.session.passport?.user?.token){
     Movies.findOne({where:{
         id:req.params.id
     }}).then(movie=>{
@@ -247,22 +198,9 @@ exports.show_movie = (req, res)=>{
             )
         }
     })
-} else {
-    res.json({
-        "status": 0,
-        "error": {
-          "fields": {
-            "token": "REQUIRED"
-          },
-          "code": "FORMAT_ERROR"
-        }
-      })
-}
 }
 
 exports.list_movies = (req, res)=>{
-    if(req.session.passport?.user?.token){
-
         let params = {
             where: {
 
@@ -273,7 +211,7 @@ exports.list_movies = (req, res)=>{
         for(value in req.query){
             value === "title" || value === "search" || value === "actor" ?
              params.where[value] = {[Op.substring]:req.query[value]} : null;
-            value === "order" ? params[value] = [[req.query?.sort, req.query?.order]] : null;
+            value === "order" ? params[value] = [[req.query?.sort||"title", req.query?.order]] : null;
             value === "offset" || value === "limit" ? params[value] = +req.query[value] : null
         }
         
@@ -329,16 +267,4 @@ exports.list_movies = (req, res)=>{
                   )
               });
         }
-        
-    } else {
-        res.json({
-            "status": 0,
-            "error": {
-              "fields": {
-                "token": "REQUIRED"
-              },
-              "code": "FORMAT_ERROR"
-            }
-          })
-    }
 }
