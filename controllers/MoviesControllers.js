@@ -44,6 +44,8 @@ exports.load_file = (req, res, next)=>{
                     });
                   })
                   res.json(data)
+                }).catch(err=>{
+                  res.json(err)
                 })
                    
               } catch(err){
