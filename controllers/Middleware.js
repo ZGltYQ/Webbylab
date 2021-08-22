@@ -1,34 +1,3 @@
-
-exports.checkToken = (req, res, next)=>{
-    try{
-        if(!req.session.passport?.user?.token) throw new Error()
-        if(req.headers["postman-token"]){
-            if(req.headers.authorization === req.session.passport?.user?.token){
-                next()
-            } else {
-                throw new Error()
-            }
-        } else {
-            if(req.cookies.token === req.session.passport?.user?.token){
-                next()
-            } else {
-                throw new Error()
-            }
-        }
-        
-    } catch(err){
-        res.json({
-            "status": 0,
-            "error": {
-              "fields": {
-                "token": "REQUIRED"
-              },
-              "code": "FORMAT_ERROR"
-            }
-          })
-    }
-}
-
 exports.checkValid = (req, res, next)=>{
     try{
         if(!req.body.title || req.body.title.length <= 0) throw new Error("EMPTY TITLE FIELD");

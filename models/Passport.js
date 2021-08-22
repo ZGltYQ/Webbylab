@@ -1,32 +1,56 @@
-const passport = require("passport");
+const passport    = require('passport');
+const passportJWT = require("passport-jwt");
+const ExtractJWT = passportJWT.ExtractJwt;
 const LocalStrategy = require('passport-local').Strategy;
+const JWTStrategy   = passportJWT.Strategy;
 const Users = require("./Users");
 const crypto = require("crypto");
 
-module.exports = passport.use(new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password'
-  },
-  async function(email, password, done) {
-    var user = await Users.findOne(
-      { where: {
-          email: email
-        }
-      });
-    if (user == null) {
-      return done(null, false, { message: 'Incorrect email.' });
+
+passport.use("local", new LocalStrategy({
+        usernameField: 'email',
+        passwordField: 'password'
+    },
+    function (email, password, done) {
+      
+         Users.findOne({ where: {
+                email
+              }
+            })
+            .then(user => {
+              if (user == null) {
+                return done(null, false, { message: 'Incorrect email.' });
+              }
+              if (user.password !== crypto.createHash('md5').update(password).digest('hex')) {
+                return done(null, false, { message: 'Incorrect password.' });
+              }
+              return done(null, user);
+            })
     }
-    if (user.password !== crypto.createHash('md5').update(password).digest('hex')) {
-      return done(null, false, { message: 'Incorrect password.' });
+));
+
+passport.serializeUser(function(user, done) {
+  done(null, {id: user.id});
+});
+
+passport.deserializeUser(function(user, done) {
+  Users.findByPk(user.id).then(des_user=>{
+    done(null, des_user);
+  })
+});
+
+passport.use("jwt", new JWTStrategy({
+        jwtFromRequest: ExtractJWT.fromHeader('authorization'),
+        secretOrKey   : 'zgltyq03022001'
+    },
+    function (jwtPayload, cb) {
+        //find the user in db if needed
+        Users.findByPk(jwtPayload.id)
+            .then(user => {
+                return cb(null, user);
+            })
+            .catch(err => {
+                return cb(err);
+            });
     }
-    return done(null, user);
-  }
-  ));
-  
-  passport.serializeUser(function(user, done) {
-    done(null, {id: user.id, email:user.email, name: user.name, token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJwZXRyb0BnbWFpbC5jb20iLCJuYW1lIjoiUGV0cm92IFBldHJvIiwiY3JlYXRlZEF0IjoiMjAyMS0wNi0yOVQxMDo0Njo1NS4wMDBaIiwidXBkYXRlZEF0IjoiMjAyMS0wNi0yOVQxMDo0Njo1NS4wMDBaIiwiaWF0IjoxNjI1MDUyNDc5fQ.LY8PKLr060GmU81LaW8GY0Ef3Nr0aXHZPhL168rhPa0", createdAt: user.createdAt});
-  });
-  
-  passport.deserializeUser(function(user, done) {
-    done(null, {id: user.id, email:user.email, name: user.name, token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJwZXRyb0BnbWFpbC5jb20iLCJuYW1lIjoiUGV0cm92IFBldHJvIiwiY3JlYXRlZEF0IjoiMjAyMS0wNi0yOVQxMDo0Njo1NS4wMDBaIiwidXBkYXRlZEF0IjoiMjAyMS0wNi0yOVQxMDo0Njo1NS4wMDBaIiwiaWF0IjoxNjI1MDUyNDc5fQ.LY8PKLr060GmU81LaW8GY0Ef3Nr0aXHZPhL168rhPa0", createdAt: user.createdAt});
-  });
+));

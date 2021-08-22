@@ -1,11 +1,49 @@
-<form class="row g-3" action="/api/v1/movies/import" method="POST" enctype="multipart/form-data">
-<div class="input-group mt-5">   
+<form class="row g-3" id="form" action="/api/v1/movies/import" method="POST" enctype="multipart/form-data">
+<div class="input-group mt-5">
+        <input class="form-control form-control-sm" id="token" type="text" name="token" placeholder="token" aria-label="token">  
         <input type="file" class="form-control" id="inputGroupFile04" name="movies" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
         <button class="btn btn-outline-secondary" type="submit" id="inputGroupFileAddon04">Button</button>
 </div>
 </form>
-<ul class="list-group">
-{{#each list}}
-<li class="list-group-item">{{this}}</li>
-{{/each}}
-</ul>
+<code id="output">
+
+</code>
+<script defer>
+document.getElementById("form").addEventListener("submit", (form)=>{
+        form.preventDefault()
+        
+        fetch("/api/v1/movies/import", {
+                method:"POST",
+                headers:{
+                "Authorization":document.getElementById("token").value
+                },
+                body: new FormData(document.getElementById("form"))
+        }).then(res=>{
+                if(res.status !== 401){
+                return res.json()
+                } else {
+                document.getElementById("output").innerHTML = JSON.stringify({
+                        "status": 0,
+                        "error": {
+                                "fields": {
+                                "token": "REQUIRED"
+                                },
+                                "code": "FORMAT_ERROR"
+                        }
+                        })
+                }
+                }).then(data=>{
+                render = ``;
+                if(data.length){
+                data.forEach(movie=>{
+                        render+=`<p>${JSON.stringify(movie)}</p>`;
+                })
+                document.getElementById("output").innerHTML = render;
+                } else {
+                        document.getElementById("output").innerHTML = JSON.stringify(data)
+                }
+        })
+       
+})
+
+</script>

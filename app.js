@@ -6,10 +6,12 @@ const logger = require('morgan');
 const expressHbs = require("express-handlebars");
 const hbs = require("hbs");
 const multer = require("multer");
-const ModelPassport = require("./models/Passport");
 const helmet = require("helmet");
 const session = require("express-session");
 const MySQLStore = require('express-mysql-session')(session);
+const passport = require('passport');
+
+require('./models/Passport');
 
 const indexRouter = require('./routes/index');
 const apiRouter = require("./routes/api");
@@ -65,8 +67,8 @@ app.use(session({
 }));
 
 
-app.use(ModelPassport.initialize());
-app.use(ModelPassport.session());
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 const storageConfig = multer.diskStorage({

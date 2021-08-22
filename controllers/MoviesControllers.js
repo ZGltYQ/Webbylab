@@ -55,6 +55,7 @@ exports.load_file = (req, res, next)=>{
     }
 
 exports.add_movie = (req,res)=>{
+  console.log(req)
     Movies.create(req.body).then(movie=>{
          let actor_list = [];
          req.body.actors.map(actor=>{
