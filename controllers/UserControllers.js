@@ -4,7 +4,7 @@ const crypto = require("crypto");
 
 exports.create = (req, res)=>{
     const {email, name, password, confirmPassword} = req.body;
-    if(password === confirmPassword && email.length > 0 && email.indexOf("@") !== -1){
+    if(password === confirmPassword && email.length > 8 && email.indexOf("@") !== -1){
         Users.create({
             email,
             name,
@@ -30,7 +30,7 @@ exports.create = (req, res)=>{
         "status": 0,
         "error": {
           "fields": {
-            "email": "email must be longer than one character and have '@'"
+            "email": "email must be longer than eight character and have '@'"
           },
           "code": "INVALID_EMAIL"
         }
